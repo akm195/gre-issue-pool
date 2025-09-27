@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRE Issue Pool 自动生成范文体验版</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f7fa;
+      color: #333;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 30px;
+      background: #e0e0e0;
+      border-radius: 15px;
+      margin: 20px 0;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #45a049);
+      border-radius: 15px;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    
+    .controls {
+      text-align: center;
+      margin: 30px 0;
+    }
+    
+    .btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .btn:hover {
+      background: #1976D2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .btn-mindmap {
+      background: #FF9800;
+    }
+    
+    .btn-mindmap:hover {
+      background: #F57C00;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .block {
+      height: 100px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+    }
+    
+    .block:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+    }
+    
+    .block.done::after {
+      content: "✓";
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      background: rgba(255,255,255,0.2);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .block.today {
+      box-shadow: 0 0 0 3px #ffeb3b, 0 4px 8px rgba(0,0,0,0.2);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 235, 59, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 235, 59, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 235, 59, 0); }
+    }
+    
+    .num {
+      font-size: 12px;
+      opacity: 0.9;
+      font-weight: bold;
+    }
+    
+    .short {
+      font-size: 14px;
+      text-align: center;
+      padding: 0 10px;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+    
+    .rolling-box {
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+      background: #fff;
+      border-radius: 8px;
+      margin: 20px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s;
+    }
+    
+    .outline-box {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      padding: 24px;
+      z-index: 1000;
+      overflow-y: auto;
+      animation: modalFadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    
+    .outline-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: #333;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .outline-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #666;
+      transition: color 0.3s;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    
+    .outline-close:hover {
+      color: #333;
+      background: #f5f5f5;
+    }
+    
+    .mindmap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .node {
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      min-width: 180px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    
+    .node:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .subnode {
+      margin: 8px 0;
+      padding-left: 10px;
+      font-size: 14px;
+      color: #666;
+      border-left: 2px solid #ddd;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
+    }
+    
+    .essay-content {
+      line-height: 1.6;
+    }
+    
+    .essay-content b {
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <h1>GRE Issue Pool 自动范文生成体验</h1>
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar">0 / 20 (0%)</div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="drawBtn">抽取今日题目</button>
+  </div>
+  <div id="rollingBox" class="rolling-box" style="display:none;">抽选中 ...</div>
+  <div class="grid" id="grid"></div>
+  
+  <div class="overlay" id="overlay" onclick="hideOutline()"></div>
+  <div id="outlineBox" class="outline-box" style="display:none;">
+    <div class="outline-title" id="outlineTitle"></div>
+    <span class="outline-close" onclick="hideOutline()">×</span>
+    <div id="outlineContent" class="essay-content"></div>
+    <div style="text-align: center; margin-top: 20px;">
+      <button class="btn btn-mindmap" id="mindmapBtn" style="display:none;">显示结构性提纲</button>
+      <button class="btn" id="doneBtn" style="display:none;">打卡完成</button>
+    </div>
+  </div>
+
+  <script>
+    // 题库含范文
+    const issues = [
+      {
+        short: "高分竞争与学习质量",
+        text: "Competition for high grades seriously limits the quality of learning at all levels of education.",
+        essay: `<b>高分竞争：学习质量的双刃剑</b><br><br>
+        “对高分的竞争严重限制了各教育阶段的学习质量”这一论断，尖锐地触及了现代教育的核心困境。这一现象从基础教育到高等教育普遍存在，值得我们深入审视。虽然对分数的不懈追求确实带来诸多弊端，但更辩证地看，竞争本身是一种固有且并非完全消极的力量。因此，真正决定竞争对学习质量影响的，并非其存在与否，而是其性质与应用方式。<br><br>
+        <b>首先</b>，必须承认竞争是学业成就的强大催化剂。对卓越的渴望，在高分这一清晰可量化目标的驱动下，能够激励学生深入学习材料、高效管理时间并追求精通。这种竞争动力推动个人突破舒适区，往往在激发潜能和培养成就感方面发挥关键作用。从这个意义上讲，竞争是知识和技能初步获取的关键驱动力。<br><br>
+        <b>然而</b>，当竞争变得只关注结果——即分数——而非学习过程本身时，往往会产生事与愿违的后果。教育体验随之沦为一场策略游戏，学生可能优先考虑易于测试的信息而非概念性理解，或者放弃自己真正感兴趣的科目，转而选择那些被认为更容易得高分的科目。这种功利主义方法，为战术优势牺牲 intellectual curiosity（求知欲），不可避免地削弱了学习的深度、广度和乐趣，限制了其整体质量。<br><br>
+        <b>此外</b>，竞争并非一个短暂阶段，而是学术和职业生活中持续存在的特征。在一个层级取得成功的学生，立即会面临新的、往往更复杂的竞争环境。因此，目标不可能是完全消除竞争（这几乎是不可能的任务），而是培养与之更健康的关系。教育系统有责任培养学生的韧性、道德操守和成长型思维，使其将竞争视为持续自我改进的手段，而非令人心力交瘁的压力源。<br><br>
+        <b>总之</b>，竞争性评分与学习质量之间的关系本质上是悖论性的。虽然竞争可以激发努力和自律，但其对分数的单一关注同时可能限制教育体验。因此，解决方案不在于徒劳地试图将竞争从教育中移除，而在于改革其框架这一关键任务。通过设计能够同时奖励批判性思维、创造性和真正理解的评估方法，我们可以利用竞争的能量来提升而非限制所有学生真正的学习质量。`,
+        outline: [
+          "<b>引言：</b>提出竞争对学习质量影响的辩证观点",
+          "<b>论点一：</b>竞争是学业成就的催化剂，激发学习动力",
+          "<b>论点二：</b>过度关注分数导致功利学习，损害学习深度",
+          "<b>论点三：</b>竞争是持续状态，需培养健康竞争观",
+          "<b>结论：</b>改革评估体系，平衡分数与真实学习"
+        ],
+        mindmap: [
+          { label: "<strong>引言</strong>", subs: ["竞争的双重性", "教育质量困境"] },
+          { label: "<strong>动力机制</strong>", subs: ["成就催化剂", "激发潜能"] },
+          { label: "<strong>负面效应</strong>", subs: ["功利化学习", "损害深度广度"] },
+          { label: "<strong>长期视角</strong>", subs: ["竞争持续性", "培养健康心态"] },
+          { label: "<strong>解决方案</strong>", subs: ["评估体系改革", "平衡分数与学习"] }
+        ]
+      },
+      {
+        short: "科技与人类互动",
+        text: "As technology develops, it increasingly isolates people from real human interaction.",
+        essay: `<b>科技发展与人类互动的辩证关系</b><br><br>
+        在科技飞速发展的今天，有人认为技术正在使人们越来越远离真实的人际互动。这一观点有其合理性，但也需要更全面的审视。科技确实改变了我们的互动方式，但它既是隔离的工具，也是连接的桥梁。<br><br>
+        一方面，数字设备的普及确实减少了面对面的交流。社交媒体和即时通讯应用让人们更倾向于在线互动而非实体社交。然而，另一方面，科技也打破了地理限制，让远距离的亲密关系得以维持。<br><br>
+        关键在于如何智慧地使用技术，使其服务于而非取代真实的人际连接。`,
+        outline: [
+          "<b>引言：</b>科技对人际互动的影响",
+          "<b>论点一：</b>科技可能减少面对面交流",
+          "<b>论点二：</b>科技也能连接远距离关系",
+          "<b>结论：</b>需要平衡科技使用与真实互动"
+        ],
+        mindmap: [
+          { label: "<strong>引言</strong>", subs: ["科技双重影响"] },
+          { label: "<strong>隔离效应</strong>", subs: ["减少面对面交流"] },
+          { label: "<strong>连接作用</strong>", subs: ["打破地理限制"] },
+          { label: "<strong>平衡之道</strong>", subs: ["智慧使用技术"] }
+        ]
+      },
+      // 更多题目...
+      ...Array(18).fill(0).map((_,i)=>({
+        short: `样例题目 ${i+3}`,
+        text: `这是第 ${i+3} 个题目的完整描述文本。`,
+        essay: `<b>样例题目 ${i+3} 的范文</b><br><br>
+        这是针对第 ${i+3} 个题目的示范性论文内容。在实际应用中，这里将包含完整的论证结构、实例分析和结论总结。<br><br>
+        一篇优秀的GRE作文应该具备清晰的论点、充分的论据和严谨的逻辑结构。每个段落都应当有明确的主题句和支持细节。`,
+        outline: [
+          "<b>引言：</b>提出主要观点和立场",
+          "<b>论点一：</b>第一个主要论证点",
+          "<b>论点二：</b>第二个主要论证点",
+          "<b>结论：</b>总结观点并提出展望"
+        ],
+        mindmap: [
+          { label: "<strong>引言</strong>", subs: ["主题介绍"] },
+          { label: "<strong>核心论点</strong>", subs: ["论证分析"] },
+          { label: "<strong>结论</strong>", subs: ["总结展望"] }
+        ]
+      }))
+    ];
+
+    const colors = [
+      "#2b4a9e", "#18a058", "#e58f2a", "#f45a5a", "#7b44bc",
+      "#2396ab", "#e040fb", "#0e857e", "#db2777", "#a3a3a3",
+      "#f77c2b", "#5975e8", "#27bfa4", "#b37fbd", "#e7c92e",
+      "#f45fa4", "#5385d3", "#d34e19", "#3fc18e", "#7a53c7"
+    ];
+    
+    // 初始化进度
+    let progress = JSON.parse(localStorage.getItem("gre_grid_draw_mindmap_progress") || '{"done":[],"today":null}');
+    const gridDiv = document.getElementById("grid");
+    const progressBar = document.getElementById("progressBar");
+    const drawBtn = document.getElementById("drawBtn");
+    const rollingBox = document.getElementById("rollingBox");
+    const mindmapBtn = document.getElementById("mindmapBtn");
+    const overlay = document.getElementById("overlay");
+    
+    // 渲染网格方块
+    function renderGrid() {
+      gridDiv.innerHTML = "";
+      issues.forEach((issue, i) => {
+        let block = document.createElement("div");
+        block.className = "block";
+        block.style.background = colors[i % colors.length];
+        block.innerHTML = `<span class="num">#${i+1}</span><div class="short">${issue.short}</div>`;
+        
+        if (progress.today === i) block.classList.add("today");
+        if (progress.done.includes(i)) block.classList.add("done");
+        
+        block.onclick = () => showEssay(i);
+        gridDiv.appendChild(block);
+      });
+      updateProgressBar();
+    }
+    
+    // 更新进度条
+    function updateProgressBar() {
+      const total = issues.length;
+      const done = progress.done.length;
+      const pct = Math.round(done/total*100);
+      progressBar.style.width = `${pct}%`;
+      progressBar.textContent = `${done} / ${total} (${pct}%)`;
+    }
+    
+    // 显示范文弹窗
+    function showEssay(idx) {
+      let issue = issues[idx];
+      document.getElementById("outlineTitle").textContent = `题目 #${idx+1}: ${issue.short}`;
+      document.getElementById("outlineContent").innerHTML =
+        `<div style="margin-bottom:15px; padding:10px; background:#f9f9f9; border-radius:5px;"><b>题目：</b> ${issue.text}</div>` +
+        `<div>${issue.essay}</div>`;
+      
+      document.getElementById("outlineBox").style.display = "block";
+      overlay.style.display = "block";
+      document.getElementById("doneBtn").style.display = progress.done.includes(idx) ? "none" : "inline-block";
+      document.getElementById("mindmapBtn").style.display = "inline-block";
+      document.getElementById("mindmapBtn").textContent = "显示结构性提纲";
+      document.getElementById("mindmapBtn").onclick = () => showOutline(idx);
+      
+      // 更新今日题目
+      if (progress.today !== idx) {
+        progress.today = idx;
+        localStorage.setItem("gre_grid_draw_mindmap_progress", JSON.stringify(progress));
+        renderGrid();
+      }
+    }
+    
+    // 显示结构性提纲
+    function showOutline(idx) {
+      let issue = issues[idx];
+      document.getElementById("outlineTitle").textContent = `题目 #${idx+1} 的结构性提纲`;
+      document.getElementById("outlineContent").innerHTML =
+        `<div style="margin-bottom:15px; padding:10px; background:#f9f9f9; border-radius:5px;"><b>题目：</b> ${issue.text}</div>` +
+        issue.outline.map((o, i) => `<div style="margin-bottom:12px; padding:10px; background:${i % 2 === 0 ? '#f0f7ff' : '#fff'}; border-radius:5px;">${o}</div>`).join("");
+      
+      document.getElementById("mindmapBtn").textContent = "显示思维导图";
+      document.getElementById("mindmapBtn").onclick = () => showMindmap(idx);
+    }
+    
+    // 显示思维导图
+    function showMindmap(idx) {
+      let issue = issues[idx];
+      let html = `<div style="margin-bottom:15px; padding:10px; background:#f9f9f9; border-radius:5px;"><b>题目：</b> ${issue.text}</div>`;
+      html += `<div class="mindmap">`;
+      issue.mindmap.forEach(node => {
+        html += `<div class="node">${node.label}`;
+        node.subs.forEach(sub => {
+          html += `<div class="subnode">${sub}</div>`;
+        });
+        html += `</div>`;
+      });
+      html += `</div>`;
+      document.getElementById("outlineContent").innerHTML = html;
+      document.getElementById("mindmapBtn").textContent = "显示结构性提纲";
+      document.getElementById("mindmapBtn").onclick = () => showOutline(idx);
+    }
+    
+    // 隐藏弹窗
+    function hideOutline() {
+      document.getElementById("outlineBox").style.display = "none";
+      overlay.style.display = "none";
+    }
+    
+    // 打卡完成
+    document.getElementById("doneBtn").onclick = function() {
+      if (!progress.done.includes(progress.today)) {
+        progress.done.push(progress.today);
+        localStorage.setItem("gre_grid_draw_mindmap_progress", JSON.stringify(progress));
+        renderGrid();
+        this.style.display = "none";
+        hideOutline();
+      }
+    };
+    
+    // 抽题动画与分配
+    drawBtn.onclick = function() {
+      let available = issues.map((t, i) => i).filter(i => !progress.done.includes(i));
+      if (available.length === 0) {
+        alert("恭喜！所有题目已完成！");
+        return;
+      }
+      
+      drawBtn.disabled = true;
+      rollingBox.style.display = "block";
+      rollingBox.textContent = "抽选中 ...";
+      
+      let rollingOrder = [];
+      for (let i = 0; i < 16; i++) {
+        rollingOrder.push(available[Math.floor(Math.random() * available.length)]);
+      }
+      
+      let finalIdx = rollingOrder[rollingOrder.length - 1];
+      let step = 0;
+      
+      let rollingAnim = setInterval(() => {
+        rollingBox.textContent = `抽选中: 题目 #${rollingOrder[step] + 1} ...`;
+        step++;
+        
+        if (step >= rollingOrder.length) {
+          clearInterval(rollingAnim);
+          setTimeout(() => {
+            rollingBox.style.display = "none";
+            showEssay(finalIdx);
+            drawBtn.disabled = false;
+          }, 500);
+        }
+      }, 120);
+    };
+    
+    // 首次渲染
+    renderGrid();
+    
+    // 添加键盘事件支持
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        hideOutline();
+      }
+    });
+  </script>
+</body>
+</html>
